@@ -99,7 +99,7 @@ class PixieSMS {
 	 *
 	 * 	@return: string
 	 */
-	public function Send_SMS($Sender = null, $Receivers = array(), $Message) {
+	public function Send_SMS($Receivers = array(), $Message, $Sender = null) {
 		if (!$Sender) {
 			$Sender = $this->Sender;
 		}
@@ -139,13 +139,15 @@ $Pixie = new PixieSMS("ACCOUNT_ID", "PASSWORD_OR_SIGNATURE", "SENDER");
 /*
  *	EXAMPLE: SEND SMS
  */
-// Recievers must be passed as array
+// Recievers must be passed to class method as array
 $Receivers = array(
 	'004712345678'
 );
 
 // Using a variable to store response from server
-$Data = $Pixie->Send_SMS($Sender, $Receivers, "MESSAGE");
+$Data = $Pixie->Send_SMS($Receivers, "MESSAGE"); // This uses the default sender as defined in construct of object
+$Data = $Pixie->Send_SMS($Receivers, "MESSAGE", "Santa Claus"); // This uses a custom sender
+
 
 
 /*
