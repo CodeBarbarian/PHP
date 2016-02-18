@@ -100,10 +100,11 @@ class PixieSMS {
 	 * 	@return: string
 	 */
 	public function Send_SMS($Sender = null, $Receivers = array(), $Message) {
-		$Data = "";
-		foreach($Receivers as $Value) {
-			$Data .= $value . ',';
+		if (!$Sender) {
+			$Sender = $this->Sender;
 		}
+		
+		$Data = implode(",", $Receivers);
 		
 		$URL 	= $this->Build_URL($Data, $Message);
 		$Result = $this->Send_Data($URL);
@@ -131,7 +132,27 @@ class PixieSMS {
 }
 
 /*
- *	EXAMPLE
+ *	EXAMPLE: OBJECT CREATION
  */
 $Pixie = new PixieSMS("ACCOUNT_ID", "PASSWORD_OR_SIGNATURE", "SENDER"); 
+
+/*
+ *	EXAMPLE: SEND SMS
+ */
+// Recievers must be passed as array
+$Receivers = array(
+	'004712345678'
+);
+
+// Using a variable to store response from server
+$Data = $Pixie->Send_SMS($Sender, $Receivers, "MESSAGE");
+
+
+/*
+ *	EXAMPLE: RETRIEVE SMS
+ */
+
+// Using a variable to store response from server
+$Data = $Pixie->Retrieve_SMS();
+
 
