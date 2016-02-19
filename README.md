@@ -2,8 +2,8 @@
 
 A collection of useful PHP scripts
 
-	_WEB (Scripts that are meant to be run trough a webserver)
-	--
+_WEB (Scripts that are meant to be run trough a webserver)
+--
 	* errorhandler - A simple errorhandler that gives you a link to stackoverflow with the error message already included.
 		Version:	0.1
 		Status:		Working
@@ -14,8 +14,8 @@ A collection of useful PHP scripts
 		Status:		Under Development (Working Prototype)
 		Location:	PHPscripts\_web\pixie_sms
 		
-	_CONSOLE (Scripts that are meant to be run trough a PHP Shell - CLI)
-	--
+_CONSOLE (Scripts that are meant to be run trough a PHP Shell - CLI)
+--
 	* findadmin 	- A simple yet useful way to search on a specific site for typical login portals
 		Version:	0.1
 		Status:		Under Development (Working Prototype)
