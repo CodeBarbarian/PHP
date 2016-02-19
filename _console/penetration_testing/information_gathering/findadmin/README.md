@@ -5,9 +5,9 @@ A simple yet useful way to search on a specific site for typical login portals
 USE
 --
 
-	* php index.php [TARGET]
+	php index.php [TARGET]
 	
-	Remember, use the full URL of the site you are scanning. I.e: http://yourhost.com
+Remember, use the full URL of the site you are scanning. I.e: http://yourhost.com
 
 	
 
