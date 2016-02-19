@@ -10,8 +10,6 @@ USE
 	Remember, use the full URL of the site you are scanning. I.e: http://yourhost.com
 
 	
- +------------------------------------------------------------------------+
- | This script is used solely for informative, educational        		  |
- | purposes only. Author cannot be held responsible for any               |
- | damage and (or) (ab)use of this script.                                |
- +------------------------------------------------------------------------+
+
+This script is used solely for informative, educational purposes only. 
+Author cannot be held responsible for any damage and (or) (ab)use of this script.
