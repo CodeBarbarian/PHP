@@ -22,12 +22,12 @@ if (php_sapi_name() != 'cli') {
 }
  
 // Error Reporting
-error_reporting(0);
+//error_reporting(0);
 
 // Time limit
 set_time_limit(0);
 
-// The List
+// Array containing the default list of login locations
 $Queries = array(
 	"admin1.php",
 	"admin1.html",
@@ -246,40 +246,64 @@ $Queries = array(
 );
 
 /*
- *	FUNCTIONS
+ *	@name:	greeting
+ *	@type:	function
+ *	
+ *	@param:	none
+ *
+ *	@return: string
  */
-function Greetings() {
-	$Greeting = '
-"."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."
-Welcome to Find Admin, a simple yet useful tool for finding 
-login portals on a given site. 
+function Greeting() {
+	$Greeting = "
+-----------------------------------------------------------------------------
+	Welcome to Find Admin, a simple yet useful tool for finding 
+	login portals on a given site. 
 
-Developed by CodeBarbarian for educational purposes only.
-twitter @codebarbarian
-github @codebarbarian
+	Developed by CodeBarbarian for educational purposes only.
+		twitter @codebarbarian
+		github @codebarbarian
 
-Good luck, and happy hunting! 
-"."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."."
-';
+				Good luck, and happy hunting! 
+-----------------------------------------------------------------------------\r\n";
 	return $Greeting;
 }
 
+/*
+ *	@name:	CheckHeaders
+ *	@type:	function
+ *
+ *	@param:	string
+ *
+ *	@return boolean on false, array on true 
+ */
 function CheckHeaders($URL) {
 	$Check = get_headers($URL, 1);
 	if (empty($Check)) {
-	print_r('
-	No response on Target URL.
-    Exiting...
------------------------------------------------------------------------------'); 
-	exit;
+		return false;
 	} 
 	return $Check;
 }
 
 /*
+ *	@name:	ValidateURL
+ *	@type:	function
+ *
+ *	@param:	string
+ *	
+ *	@return boolean on false, string on true
+ */
+function ValidateURL($URL){
+	if(preg_match('/^(http|https):\\/\\/[a-z0-9_]+([\\-\\.]{1}[a-z_0-9]+)*\\.[_a-z]{2,5}'.'((:[0-9]{1,5})?\\/.*)?$/i', $URL)) {
+		return $URL;
+	} else {
+		return false;
+	}
+}
+
+/*
  *	Greeting and check for arguments
  */
-echo Greetings();
+echo Greeting();
 
 if (empty($argv[1])) {
 	exit("No URL is specified. Exiting...");
@@ -288,40 +312,51 @@ if (empty($argv[1])) {
 // Grab the URL from the input parameter
 $URL = $argv[1];
 
+
 echo "\r\nChecking " . $URL . "...\r\n";
 
 // Check the server headers
-if ($Check = CheckHeaders($URL)) {
+if ($Check = CheckHeaders(ValidateURL($URL))) {
 	$ServerInfo = $Check['Server'];
 	
 	if (preg_match('/301/', $Check[0]) || preg_match('/302/', $Check[0]) ) {
 		$URL 		= $Check['Location'];
 		$ServerInfo = $Check['Server'][0];
 	}
-
+} else {
+	print_r("
+-----------------------------------------------------------------------------
+		No response on Target URL. Exiting...
+-----------------------------------------------------------------------------\r\n"); 
+	exit();
 }
 
-$Info = '
+// Show some information regarding the current target
+$TargetInformation = "
 -----------------------------------------------------------------------------
-    Target : ' . $URL . '
-    Status : ' . $Check[0] . '
-    Server : ' . $ServerInfo . '
-    Start Scan : ' . date("Y-m-d H:i:s") . '
+    Target : " . $URL . "
+    Status : " . $Check[0] . "
+    Server : " . $ServerInfo . "
+    Start Scan : " . $StartScan = date("Y-m-d H:i:s") . "
 -----------------------------------------------------------------------------
-';
-print_r($Info);
+\r\n";
+print_r($TargetInformation);
 
+// Something to store the results in for later use
 $Result = array();
+
 
 foreach ($Queries as $Query){
 	$Headers = get_headers($URL . $Query, 1);
 	
+	// Check if we get a 200 OK response from the header
 	if (preg_match('/200/', $Headers[0])) {
 		$Result[] = "[+] " . $URL . $Query . " Found!\r\n";
 		echo end($Result);
 	}
+	// Check if we get a 301 or 302 Moved response from the header
 	elseif (preg_match('/301/', $Headers[0]) || preg_match('/302/', $Headers[0]) ) {
-		$Result[] = "[+] " . $URL . $Query . " Found! Redirects to -> " . $Headers['Location'] . "\r\n";
+		$Result[] = "[+] " . $URL . $Query . " Found! Redirects to -> " . $Headers['Location'][0] . "\r\n";
 		echo end($Result);
 	}
 	else {
@@ -329,19 +364,23 @@ foreach ($Queries as $Query){
 	}
 }
 
-echo "====================================================================================\r\n";
-echo "====================================REPORT BEGIN====================================\r\n"; 
-echo "====================================================================================\r\n";
-print_r($Info);
+// Some basic discovery information
+echo "\r\n";
+echo "-----------------------------------------------------------------------------\r\n";
+echo "-------------------------------REPORT BEGIN----------------------------------\r\n"; 
+echo "-----------------------------------------------------------------------------\r\n";
+print_r($TargetInformation);
 
 if (!empty($Result)) {
-	echo "Found the following login locations: " . "\r\n";
+	echo "Discovered the following login portals: \r\n";
 	foreach($Result as $Value) {
 		echo $Value;
-	} 
+	}
+		echo "\r\n";
+} else {
+	echo "No login portals discovered.\r\n";
 }
 
-echo "\r\n";
-echo "====================================================================================\r\n";
-echo "=====================================REPORT END=====================================\r\n"; 
-echo "====================================================================================\r\n";
+echo "-----------------------------------------------------------------------------\r\n";
+echo "-------------------------------REPORT END------------------------------------\r\n"; 
+echo "-----------------------------------------------------------------------------\r\n";
