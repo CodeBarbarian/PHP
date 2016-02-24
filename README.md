@@ -21,3 +21,9 @@ _CONSOLE (Scripts that are meant to be run trough a PHP Shell - CLI)
 		Status:		Under Development (Working Prototype)
 		Loation:	PHPscripts\_console\penetration_testing\information_gathering\findadmin
 	
+	* hash_comparison - A simple hash comparison tool
+		Version:	0.1
+		Status:		Beta
+		Location:	PHPscripts\_console\penetration_testing\password_cracking\hash_comparison
+		
+		
