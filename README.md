@@ -27,6 +27,7 @@ _CONSOLE (Scripts that are meant to be run trough a PHP Shell - CLI)
 		Location:	PHPscripts\_console\penetration_testing\password_cracking\hash_comparison
 		
 _REQUESTS (scripts that I have been requested to make)
+--
 	* csgo
 		* Version: 0.1
 		* Location: PHP\_requests\csgo
