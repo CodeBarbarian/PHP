@@ -1,13 +1,13 @@
 <?php
 /*
  *	@name:		Hash Comparison
- *	@version:	0.5
- *	@status:	Beta
+ *	@version:	1.0
+ *	@status:	Stable
  *	@author:	Morten Haugstad
  *	
  *	@desc:		A CLI tool for comparing a hashes against each other. 
  *				This tool uses a dictionary attack, to match. So if the hash has been salted,
- *				this will not work. But lets be hones, people are stupid sometimes.
+ *				this will not work. But lets be honest, people are stupid sometimes.
  *
  *	@licence: 	CC
  *
@@ -20,10 +20,6 @@
  * damage and (or) (ab)use of this script.                                |
  *------------------------------------------------------------------------+
  */
-/*
- *	Error Reporting
- */
-error_reporting(0);
 
 /*
  *	CLI Check, need to be run trough PHP Shell.
@@ -31,6 +27,16 @@ error_reporting(0);
 if (php_sapi_name() != 'cli') {
 	exit("\r\nPHP shell only! Exiting...\r\n");
 }
+
+/*
+ *	Error Reporting
+ */
+error_reporting(0);
+
+/*
+ *	Time Zone
+ */
+date_default_timezone_set("Europe/Oslo");
 
 /*
  *	Script Includes
@@ -42,11 +48,6 @@ require_once 'functions.php';
  */
 define ("DICTIONARIES_DIR", "dictionaries/");
 define ("REPORTS_DIR", "reports/");
-
-
-/*
- *	Functions
- */
 
 /*
  *	@name:	Greeting
@@ -71,12 +72,31 @@ function Greeting() {
 }
 
 /*
- *	This function needs to be created...
+ *	@name:		LogToFile
+ *	@param:		string
+ *	@param		string
+ *
+ *	return		none
  */
 function LogToFile($Data, $File) {
+	$Handle = '';
 	
+	if (!file_exists(REPORTS_DIR.$File)) {
+		$Handle = fopen(REPORTS_DIR.$File, "w");
+	} else {
+		$Handle = fopen(REPORTS_DIR.$File, "a");
+	}
+	
+	fwrite($Handle, $Data);
+	fclose($Handle);
 }
 
+/*
+ *	@name:	GetDictionaries
+ *	@param:	DictionaryDir
+ *	
+ *	@return: array
+ */
 function GetDictionaries($DictionaryDir) {
 	$FileInfo = array();
 
@@ -108,40 +128,59 @@ function CountLines($File) {
 }
 
 /*
- *	Display function (Helpers) for logging.
+ *	@name:	Log_Start
+ *	@param:	string
+ *
+ *	@return: string
  */
 function Log_Start($Data) {
 	$Date = date("H:i:s d-m-Y"); // Date & Time
 	$Log  = "
 -----------------------------------------------------------------------------
-Logging Starts @ {$Date}, trying to find a match for {$Data}  
+Logging Starts @ {$Date} 
+Trying to find a match for {$Data}  
 -----------------------------------------------------------------------------
 \r\n";
 
 	return $Log;
 }
 
+/*
+ *	@name:	Log_End
+ *	@param:	string
+ *
+ *	@return: string
+ */
 function Log_End($Data) {
 	$Date = date("H:i:s d-m-Y"); // Date & Time
 	$Log  = "
 -----------------------------------------------------------------------------
-Logging Ended @ {$Date}, {$Data} 
+Logging Ended @ {$Date}
+{$Data} 
 -----------------------------------------------------------------------------
 \r\n";
 	
 	return $Log;
 }
 
+
+/*
+ *	@name:	Log_Dictionary
+ *	@param:	string
+ *
+ *	@return: string
+ */
 function Log_Dictionary($Data) {
 	$Date = date("H:i:s d-m-Y"); // Date & Time
 	$Log  = "
 -----------------------------------------------------------------------------
-			Trying dictionary: {$Data}
+Trying dictionary: {$Data}
 -----------------------------------------------------------------------------
 \r\n";
 
 	return $Log;
 }
+
 /*
  *	@name:		CheckHash
  *	
@@ -186,7 +225,7 @@ function CheckHash ($Dictionary = array(), $HashAlgo, $Hash, $LogFile = false) {
 			if (($Result = hash($HashAlgo, $Password)) == $Hash) { 
 				show_status($NrPasswords, $NrPasswords); // Finish the progressbar
 				if ($LogFile) {
-					LogToFile(Log_End("MATCH FOUND! [+] " . $Password), $LogFile);
+					LogToFile(Log_End("[+] MATCH FOUND! for ". $Hash . " -> " . $Password), $LogFile);
 				}
 				return array($Result, $Password);
 			}
@@ -199,10 +238,19 @@ function CheckHash ($Dictionary = array(), $HashAlgo, $Hash, $LogFile = false) {
 	return false;
 }
 
+/*
+ *	Some variables used for checking 
+ *	which options shall be used with
+ *	the HashCheck()
+ */
 $UseDictionary 	= false;
 $UseFileStorage = false;
 
 
+/*
+ *	Required and Optional input
+ *	parameters for the script
+ */
 $ShortOps  = "";
 $ShortOps .= "a:";
 $ShortOps .= "h:";
@@ -250,6 +298,10 @@ if ($UseDictionary) {
 	}
 }
 
+/*
+ *	Let us check to see if we should use a file to store
+ *	the scripts report in? 
+ */
 if ($UseFileStorage) {
 	$Filename = $Options['file'];
 } else {
