@@ -1,8 +1,8 @@
 <?php
 /*
  *	@name:		Hash Comparison
- *	@version:	0.1
- *	@status:	In Development
+ *	@version:	0.5
+ *	@status:	Beta
  *	@author:	Morten Haugstad
  *	
  *	@desc:		A CLI tool for comparing a hashes against each other. 
@@ -11,7 +11,7 @@
  *
  *	@licence: 	CC
  *
- *	@use:		index.php -a [HASH_ALGO] -h [HASH] --dict="[DICT]" --file="[FIILE]" 
+ *	@use:		index.php -a [HASH_ALGO] -h [HASH] --dict="[DICT]" --file="[FILE]" 
  * 	
  *
  *------------------------------------------------------------------------+
@@ -20,9 +20,14 @@
  * damage and (or) (ab)use of this script.                                |
  *------------------------------------------------------------------------+
  */
+/*
+ *	Error Reporting
+ */
 error_reporting(0);
 
-// CLI Check
+/*
+ *	CLI Check, need to be run trough PHP Shell.
+ */
 if (php_sapi_name() != 'cli') {
 	exit("\r\nPHP shell only! Exiting...\r\n");
 }
@@ -35,8 +40,8 @@ require_once 'functions.php';
 /*
  *	Some constants to help keep track of things
  */
-define ("DICTIONARIES_DIR", "dict/");
-define ("REPORTS_DIR", "");
+define ("DICTIONARIES_DIR", "dictionaries/");
+define ("REPORTS_DIR", "reports/");
 
 
 /*
@@ -45,7 +50,6 @@ define ("REPORTS_DIR", "");
 
 /*
  *	@name:	Greeting
- *
  *	@param:	none
  *
  *	@return string
@@ -67,14 +71,77 @@ function Greeting() {
 }
 
 /*
- *	THE IDEA HERE IS TO CHECK TO SEE IF THE DICTIONARIES ARE IN THE RIGHT FOLDER
- *	THIS FUNCTIONS NEEDS TO BE IN PLACE BEFORE WE DO ANYTHING MORE.
- *
- *
+ *	This function needs to be created...
  */
-function CheckDictionaries($Dictionaries = array()) {
+function LogToFile($Data, $File) {
+	
 }
 
+function GetDictionaries($DictionaryDir) {
+	$FileInfo = array();
+
+	foreach(glob($DictionaryDir.'*.txt') as $Filename) {
+		$FileInfo[$Filename] = filesize($Filename);
+	}
+	
+	asort($FileInfo);
+	
+	return $FileInfo;
+} 
+
+/*
+ *	@name:	CountLines
+ *	@param:	string
+ *	@return: integer
+ */
+function CountLines($File) {
+    $File  = fopen($File, 'rb');
+    $Lines = 0;
+
+    while (!feof($File)) {
+        $Lines += substr_count(fread($File, 8192), "\n");
+    }
+
+    fclose($File);
+
+    return $Lines;
+}
+
+/*
+ *	Display function (Helpers) for logging.
+ */
+function Log_Start($Data) {
+	$Date = date("H:i:s d-m-Y"); // Date & Time
+	$Log  = "
+-----------------------------------------------------------------------------
+Logging Starts @ {$Date}, trying to find a match for {$Data}  
+-----------------------------------------------------------------------------
+\r\n";
+
+	return $Log;
+}
+
+function Log_End($Data) {
+	$Date = date("H:i:s d-m-Y"); // Date & Time
+	$Log  = "
+-----------------------------------------------------------------------------
+Logging Ended @ {$Date}, {$Data} 
+-----------------------------------------------------------------------------
+\r\n";
+	
+	return $Log;
+}
+
+function Log_Dictionary($Data) {
+	$Date = date("H:i:s d-m-Y"); // Date & Time
+	$Log  = "
+-----------------------------------------------------------------------------
+			Trying dictionary: {$Data}
+-----------------------------------------------------------------------------
+\r\n";
+
+	return $Log;
+}
 /*
  *	@name:		CheckHash
  *	
@@ -85,8 +152,17 @@ function CheckDictionaries($Dictionaries = array()) {
  *	@return:	on true  : array
  *	@return:	on false : bool 
  */
-function CheckHash ($Dictionary = array(), $HashAlgo, $Hash) {
+function CheckHash ($Dictionary = array(), $HashAlgo, $Hash, $LogFile = false) {
+	if ($LogFile) {
+		LogToFile(Log_Start($Hash), $LogFile);
+	}
+		
 	foreach($Dictionary as $Value) {
+		
+		if ($LogFile) {
+			LogToFile(Log_Dictionary($Value), $LogFile);
+		}
+		
 		$Count 		 = 0;
 		$NrPasswords = 0;
 		
@@ -94,21 +170,24 @@ function CheckHash ($Dictionary = array(), $HashAlgo, $Hash) {
 -----------------------------------------------------------------------------
 		Using {$Value} as dictionary
 -----------------------------------------------------------------------------\r\n");
+
 		
-		$NrPasswords = count(file(DICTIONARIES_DIR.$Value));
+		$NrPasswords = CountLines($Value);
 		$Count		 = 1;
 		
-		$Dict = fopen(DICTIONARIES_DIR.$Value, "rb");
+		$Dict = fopen($Value, "rb");
 		
 		while(!feof($Dict)){
 			
 			$Password = fgets($Dict);
 			
-			// Getting rid of those nasty win/*nix EOF problems
 			$Password = str_replace(array("\r", "\n"), '', $Password);
 			
 			if (($Result = hash($HashAlgo, $Password)) == $Hash) { 
 				show_status($NrPasswords, $NrPasswords); // Finish the progressbar
+				if ($LogFile) {
+					LogToFile(Log_End("MATCH FOUND! [+] " . $Password), $LogFile);
+				}
 				return array($Result, $Password);
 			}
 			
@@ -120,45 +199,23 @@ function CheckHash ($Dictionary = array(), $HashAlgo, $Hash) {
 	return false;
 }
 
-$UseSalt 		= false;
 $UseDictionary 	= false;
-$UseFileStorage	= false;
+$UseFileStorage = false;
+
 
 $ShortOps  = "";
 $ShortOps .= "a:";
 $ShortOps .= "h:";
 
 $LongOps = array(
-	"salt::",
 	"dict::",
-	"file::",
+	"file::"
 );
 
 /*
  *	Get the arguments passed to the script
  */
 $Options = getopt($ShortOps, $LongOps);
-
-/*
- *	These are the default dictionaries provided with the script.
- *	The CheckDictionaries() function will do a check to see,
- * 	if all the dictionaries are present, if not. Use only those
- *	that are available. If none are present, the script will halt.
- *	
- *	This script uses the SecList password dictionaries created
- * 	and maintained by the https://github.com/danielmiessler/SecLists
- */
-$Dictionaries = array(
-	"rockyou-45.txt",
-	"rockyou-40.txt",
-	"porn-unknown.txt",
-	"passwords_youporn2012_raw.txt",
-	"passwords_john.txt",
-	"john.txt",
-	"hak5.txt",
-	"carders.cc.txt",
-	"best1050.txt",
-);
 
 /*
  *	Check to see if the required fields are set
@@ -187,9 +244,17 @@ if (array_key_exists("file", $Options)) {
 if ($UseDictionary) {
 	$Dictionary = explode(' ', $Options['dict']);
 } else {
-	$Dictionary = $Dictionaries;
+	$Dictionaries = GetDictionaries(DICTIONARIES_DIR);
+	foreach($Dictionaries as $Key => $Value) {
+		$Dictionary[] = $Key;
+	}
 }
 
+if ($UseFileStorage) {
+	$Filename = $Options['file'];
+} else {
+	$Filename = false;
+}
 
 /*
  *	Display the greeting message
@@ -204,7 +269,8 @@ echo Greeting();
  *	if false, return bool
  * 	if true, return array. array[0] = hash, array[1] = word/password (CLEARTEXT)
  */
-if ($Result = CheckHash($Dictionary, $Options['a'], $Options['h'])) {
+
+if ($Result = CheckHash($Dictionary, $Options['a'], $Options['h'], $Filename)) {
 	print_r("
 -----------------------------------------------------------------------------
 [SUCCESS] Found a matching hash: {$Result[0]} 
@@ -216,13 +282,4 @@ if ($Result = CheckHash($Dictionary, $Options['a'], $Options['h'])) {
 [FAILURE] No hash matching {$Options['h']} in dictionary!
 -----------------------------------------------------------------------------\r\n");
 }
-
-/*
- *	Check to see if we should store the result after finishing?
- *
- */
-if ($UseFileStorage) {
-
-}
-
 
