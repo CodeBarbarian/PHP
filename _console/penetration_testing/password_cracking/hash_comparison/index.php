@@ -222,7 +222,7 @@ function CheckHash ($Dictionary = array(), $HashAlgo, $Hash, $LogFile = false) {
 			
 			$Password = str_replace(array("\r", "\n"), '', $Password);
 			
-			if (($Result = hash($HashAlgo, $Password)) == $Hash) { 
+			if (($Result = hash($HashAlgo, $Password)) === $Hash) { 
 				show_status($NrPasswords, $NrPasswords); // Finish the progressbar
 				if ($LogFile) {
 					LogToFile(Log_End("[+] MATCH FOUND! for ". $Hash . " -> " . $Password), $LogFile);
